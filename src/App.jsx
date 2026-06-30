@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Droplets, Calendar as CalendarIcon, Calculator, X, Save, Trash2, Plus, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Droplets, Calendar as CalendarIcon, Calculator, X, Save, Trash2, Plus, Minus, Download } from 'lucide-react';
 import './index.css';
 import FarmAnimation from './FarmAnimation';
 
@@ -116,6 +116,31 @@ function AnimatedNumber({ value }) {
 function App() {
   const [baseCost, setBaseCost] = useState(60); 
   const defaultQuantity = 0; 
+
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
   
   // Calendar state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -263,8 +288,18 @@ function App() {
       <FarmAnimation />
       <div className="app-container">
       <header>
-        <h1>Pure Calc</h1>
-        <p className="subtitle">Smart Daily Milk Tracker</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div style={{ textAlign: 'left' }}>
+            <h1>Pure Calc</h1>
+            <p className="subtitle">Smart Daily Milk Tracker</p>
+          </div>
+          {deferredPrompt && (
+            <button className="save-calc-btn" style={{ padding: '0.5rem 0.8rem', fontSize: '0.85rem', width: 'auto', marginBottom: 0 }} onClick={handleInstallClick}>
+              <Download size={16} />
+              <span>Install App</span>
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Global Settings */}
